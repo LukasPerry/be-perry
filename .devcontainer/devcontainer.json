@@ -37,6 +37,8 @@
 		"micheldiz.vscode-dgraph-snippets",
 		"ms-azuretools.vscode-docker",
 		"graphql.vscode-graphql"
+
+    
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
