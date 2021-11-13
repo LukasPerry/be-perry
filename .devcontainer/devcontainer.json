@@ -36,9 +36,9 @@
 		"serayuzgur.crates",
 		"micheldiz.vscode-dgraph-snippets",
 		"ms-azuretools.vscode-docker",
-		"graphql.vscode-graphql"
-
-    
+		"graphql.vscode-graphql",
+		"mquandalle.graphql",
+		"eamodio.gitlens"
 	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
