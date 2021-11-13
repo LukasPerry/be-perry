@@ -1,0 +1,678 @@
+#######################
+# Input Schema
+#######################
+
+enum EntityType {
+	User
+	Puppy
+}
+
+enum IdentityType {
+	Holochain
+}
+
+type Identity {
+	id: ID!
+	type: IdentityType! @search(by: [exact])
+	value: String!
+}
+
+interface Entity {
+	id: ID!
+	type: EntityType! @search(by: [exact])
+	identity(filter: IdentityFilter, order: IdentityOrder, first: Int, offset: Int): [Identity!]
+	name: String! @search(by: [fulltext])
+	identityAggregate(filter: IdentityFilter): IdentityAggregateResult
+}
+
+type User implements Entity {
+	id: ID!
+	type: EntityType! @search(by: [exact])
+	identity(filter: IdentityFilter, order: IdentityOrder, first: Int, offset: Int): [Identity!]
+	name: String! @search(by: [fulltext])
+	lastSignIn: DateTime
+	active: Boolean
+	identityAggregate(filter: IdentityFilter): IdentityAggregateResult
+}
+
+type Puppy implements Entity {
+	id: ID!
+	type: EntityType! @search(by: [exact])
+	identity(filter: IdentityFilter, order: IdentityOrder, first: Int, offset: Int): [Identity!]
+	name: String! @search(by: [fulltext])
+	age: Int!
+	profilePic: String!
+	identityAggregate(filter: IdentityFilter): IdentityAggregateResult
+}
+
+#######################
+# Extended Definitions
+#######################
+
+"""
+The Int64 scalar type represents a signed 64‐bit numeric non‐fractional value.
+Int64 can represent values in range [-(2^63),(2^63 - 1)].
+"""
+scalar Int64
+
+"""
+The DateTime scalar type represents date and time as a string in RFC3339 format.
+For example: "1985-04-12T23:20:50.52Z" represents 20 minutes and 50.52 seconds after the 23rd hour of April 12th, 1985 in UTC.
+"""
+scalar DateTime
+
+input IntRange{
+	min: Int!
+	max: Int!
+}
+
+input FloatRange{
+	min: Float!
+	max: Float!
+}
+
+input Int64Range{
+	min: Int64!
+	max: Int64!
+}
+
+input DateTimeRange{
+	min: DateTime!
+	max: DateTime!
+}
+
+input StringRange{
+	min: String!
+	max: String!
+}
+
+enum DgraphIndex {
+	int
+	int64
+	float
+	bool
+	hash
+	exact
+	term
+	fulltext
+	trigram
+	regexp
+	year
+	month
+	day
+	hour
+	geo
+}
+
+input AuthRule {
+	and: [AuthRule]
+	or: [AuthRule]
+	not: AuthRule
+	rule: String
+}
+
+enum HTTPMethod {
+	GET
+	POST
+	PUT
+	PATCH
+	DELETE
+}
+
+enum Mode {
+	BATCH
+	SINGLE
+}
+
+input CustomHTTP {
+	url: String!
+	method: HTTPMethod!
+	body: String
+	graphql: String
+	mode: Mode
+	forwardHeaders: [String!]
+	secretHeaders: [String!]
+	introspectionHeaders: [String!]
+	skipIntrospection: Boolean
+}
+
+type Point {
+	longitude: Float!
+	latitude: Float!
+}
+
+input PointRef {
+	longitude: Float!
+	latitude: Float!
+}
+
+input NearFilter {
+	distance: Float!
+	coordinate: PointRef!
+}
+
+input PointGeoFilter {
+	near: NearFilter
+	within: WithinFilter
+}
+
+type PointList {
+	points: [Point!]!
+}
+
+input PointListRef {
+	points: [PointRef!]!
+}
+
+type Polygon {
+	coordinates: [PointList!]!
+}
+
+input PolygonRef {
+	coordinates: [PointListRef!]!
+}
+
+type MultiPolygon {
+	polygons: [Polygon!]!
+}
+
+input MultiPolygonRef {
+	polygons: [PolygonRef!]!
+}
+
+input WithinFilter {
+	polygon: PolygonRef!
+}
+
+input ContainsFilter {
+	point: PointRef
+	polygon: PolygonRef
+}
+
+input IntersectsFilter {
+	polygon: PolygonRef
+	multiPolygon: MultiPolygonRef
+}
+
+input PolygonGeoFilter {
+	near: NearFilter
+	within: WithinFilter
+	contains: ContainsFilter
+	intersects: IntersectsFilter
+}
+
+input GenerateQueryParams {
+	get: Boolean
+	query: Boolean
+	password: Boolean
+	aggregate: Boolean
+}
+
+input GenerateMutationParams {
+	add: Boolean
+	update: Boolean
+	delete: Boolean
+}
+
+directive @hasInverse(field: String!) on FIELD_DEFINITION
+directive @search(by: [DgraphIndex!]) on FIELD_DEFINITION
+directive @dgraph(type: String, pred: String) on OBJECT | INTERFACE | FIELD_DEFINITION
+directive @id on FIELD_DEFINITION
+directive @withSubscription on OBJECT | INTERFACE | FIELD_DEFINITION
+directive @secret(field: String!, pred: String) on OBJECT | INTERFACE
+directive @auth(
+	password: AuthRule
+	query: AuthRule,
+	add: AuthRule,
+	update: AuthRule,
+	delete: AuthRule) on OBJECT | INTERFACE
+directive @custom(http: CustomHTTP, dql: String) on FIELD_DEFINITION
+directive @remote on OBJECT | INTERFACE | UNION | INPUT_OBJECT | ENUM
+directive @remoteResponse(name: String) on FIELD_DEFINITION
+directive @cascade(fields: [String]) on FIELD
+directive @lambda on FIELD_DEFINITION
+directive @lambdaOnMutate(add: Boolean, update: Boolean, delete: Boolean) on OBJECT | INTERFACE
+directive @cacheControl(maxAge: Int!) on QUERY
+directive @generate(
+	query: GenerateQueryParams,
+	mutation: GenerateMutationParams,
+	subscription: Boolean) on OBJECT | INTERFACE
+
+input IntFilter {
+	eq: Int
+	in: [Int]
+	le: Int
+	lt: Int
+	ge: Int
+	gt: Int
+	between: IntRange
+}
+
+input Int64Filter {
+	eq: Int64
+	in: [Int64]
+	le: Int64
+	lt: Int64
+	ge: Int64
+	gt: Int64
+	between: Int64Range
+}
+
+input FloatFilter {
+	eq: Float
+	in: [Float]
+	le: Float
+	lt: Float
+	ge: Float
+	gt: Float
+	between: FloatRange
+}
+
+input DateTimeFilter {
+	eq: DateTime
+	in: [DateTime]
+	le: DateTime
+	lt: DateTime
+	ge: DateTime
+	gt: DateTime
+	between: DateTimeRange
+}
+
+input StringTermFilter {
+	allofterms: String
+	anyofterms: String
+}
+
+input StringRegExpFilter {
+	regexp: String
+}
+
+input StringFullTextFilter {
+	alloftext: String
+	anyoftext: String
+}
+
+input StringExactFilter {
+	eq: String
+	in: [String]
+	le: String
+	lt: String
+	ge: String
+	gt: String
+	between: StringRange
+}
+
+input StringHashFilter {
+	eq: String
+	in: [String]
+}
+
+#######################
+# Generated Types
+#######################
+
+type AddIdentityPayload {
+	identity(filter: IdentityFilter, order: IdentityOrder, first: Int, offset: Int): [Identity]
+	numUids: Int
+}
+
+type AddPuppyPayload {
+	puppy(filter: PuppyFilter, order: PuppyOrder, first: Int, offset: Int): [Puppy]
+	numUids: Int
+}
+
+type AddUserPayload {
+	user(filter: UserFilter, order: UserOrder, first: Int, offset: Int): [User]
+	numUids: Int
+}
+
+type DeleteEntityPayload {
+	entity(filter: EntityFilter, order: EntityOrder, first: Int, offset: Int): [Entity]
+	msg: String
+	numUids: Int
+}
+
+type DeleteIdentityPayload {
+	identity(filter: IdentityFilter, order: IdentityOrder, first: Int, offset: Int): [Identity]
+	msg: String
+	numUids: Int
+}
+
+type DeletePuppyPayload {
+	puppy(filter: PuppyFilter, order: PuppyOrder, first: Int, offset: Int): [Puppy]
+	msg: String
+	numUids: Int
+}
+
+type DeleteUserPayload {
+	user(filter: UserFilter, order: UserOrder, first: Int, offset: Int): [User]
+	msg: String
+	numUids: Int
+}
+
+type EntityAggregateResult {
+	count: Int
+	nameMin: String
+	nameMax: String
+}
+
+type IdentityAggregateResult {
+	count: Int
+	valueMin: String
+	valueMax: String
+}
+
+type PuppyAggregateResult {
+	count: Int
+	nameMin: String
+	nameMax: String
+	ageMin: Int
+	ageMax: Int
+	ageSum: Int
+	ageAvg: Float
+	profilePicMin: String
+	profilePicMax: String
+}
+
+type UpdateEntityPayload {
+	entity(filter: EntityFilter, order: EntityOrder, first: Int, offset: Int): [Entity]
+	numUids: Int
+}
+
+type UpdateIdentityPayload {
+	identity(filter: IdentityFilter, order: IdentityOrder, first: Int, offset: Int): [Identity]
+	numUids: Int
+}
+
+type UpdatePuppyPayload {
+	puppy(filter: PuppyFilter, order: PuppyOrder, first: Int, offset: Int): [Puppy]
+	numUids: Int
+}
+
+type UpdateUserPayload {
+	user(filter: UserFilter, order: UserOrder, first: Int, offset: Int): [User]
+	numUids: Int
+}
+
+type UserAggregateResult {
+	count: Int
+	nameMin: String
+	nameMax: String
+	lastSignInMin: DateTime
+	lastSignInMax: DateTime
+}
+
+#######################
+# Generated Enums
+#######################
+
+enum EntityHasFilter {
+	type
+	identity
+	name
+}
+
+enum EntityOrderable {
+	name
+}
+
+enum IdentityHasFilter {
+	type
+	value
+}
+
+enum IdentityOrderable {
+	value
+}
+
+enum PuppyHasFilter {
+	type
+	identity
+	name
+	age
+	profilePic
+}
+
+enum PuppyOrderable {
+	name
+	age
+	profilePic
+}
+
+enum UserHasFilter {
+	type
+	identity
+	name
+	lastSignIn
+	active
+}
+
+enum UserOrderable {
+	name
+	lastSignIn
+}
+
+#######################
+# Generated Inputs
+#######################
+
+input AddIdentityInput {
+	type: IdentityType!
+	value: String!
+}
+
+input AddPuppyInput {
+	type: EntityType!
+	identity: [IdentityRef!]
+	name: String!
+	age: Int!
+	profilePic: String!
+}
+
+input AddUserInput {
+	type: EntityType!
+	identity: [IdentityRef!]
+	name: String!
+	lastSignIn: DateTime
+	active: Boolean
+}
+
+input EntityFilter {
+	id: [ID!]
+	type: EntityType_exact
+	name: StringFullTextFilter
+	has: [EntityHasFilter]
+	and: [EntityFilter]
+	or: [EntityFilter]
+	not: EntityFilter
+}
+
+input EntityOrder {
+	asc: EntityOrderable
+	desc: EntityOrderable
+	then: EntityOrder
+}
+
+input EntityPatch {
+	type: EntityType
+	identity: [IdentityRef!]
+	name: String
+}
+
+input EntityRef {
+	id: ID!
+}
+
+input EntityType_exact {
+	eq: EntityType
+	in: [EntityType]
+	le: EntityType
+	lt: EntityType
+	ge: EntityType
+	gt: EntityType
+	between: EntityType
+}
+
+input IdentityFilter {
+	id: [ID!]
+	type: IdentityType_exact
+	has: [IdentityHasFilter]
+	and: [IdentityFilter]
+	or: [IdentityFilter]
+	not: IdentityFilter
+}
+
+input IdentityOrder {
+	asc: IdentityOrderable
+	desc: IdentityOrderable
+	then: IdentityOrder
+}
+
+input IdentityPatch {
+	type: IdentityType
+	value: String
+}
+
+input IdentityRef {
+	id: ID
+	type: IdentityType
+	value: String
+}
+
+input IdentityType_exact {
+	eq: IdentityType
+	in: [IdentityType]
+	le: IdentityType
+	lt: IdentityType
+	ge: IdentityType
+	gt: IdentityType
+	between: IdentityType
+}
+
+input PuppyFilter {
+	id: [ID!]
+	type: EntityType_exact
+	name: StringFullTextFilter
+	has: [PuppyHasFilter]
+	and: [PuppyFilter]
+	or: [PuppyFilter]
+	not: PuppyFilter
+}
+
+input PuppyOrder {
+	asc: PuppyOrderable
+	desc: PuppyOrderable
+	then: PuppyOrder
+}
+
+input PuppyPatch {
+	type: EntityType
+	identity: [IdentityRef!]
+	name: String
+	age: Int
+	profilePic: String
+}
+
+input PuppyRef {
+	id: ID
+	type: EntityType
+	identity: [IdentityRef!]
+	name: String
+	age: Int
+	profilePic: String
+}
+
+input UpdateEntityInput {
+	filter: EntityFilter!
+	set: EntityPatch
+	remove: EntityPatch
+}
+
+input UpdateIdentityInput {
+	filter: IdentityFilter!
+	set: IdentityPatch
+	remove: IdentityPatch
+}
+
+input UpdatePuppyInput {
+	filter: PuppyFilter!
+	set: PuppyPatch
+	remove: PuppyPatch
+}
+
+input UpdateUserInput {
+	filter: UserFilter!
+	set: UserPatch
+	remove: UserPatch
+}
+
+input UserFilter {
+	id: [ID!]
+	type: EntityType_exact
+	name: StringFullTextFilter
+	has: [UserHasFilter]
+	and: [UserFilter]
+	or: [UserFilter]
+	not: UserFilter
+}
+
+input UserOrder {
+	asc: UserOrderable
+	desc: UserOrderable
+	then: UserOrder
+}
+
+input UserPatch {
+	type: EntityType
+	identity: [IdentityRef!]
+	name: String
+	lastSignIn: DateTime
+	active: Boolean
+}
+
+input UserRef {
+	id: ID
+	type: EntityType
+	identity: [IdentityRef!]
+	name: String
+	lastSignIn: DateTime
+	active: Boolean
+}
+
+#######################
+# Generated Query
+#######################
+
+type Query {
+	getIdentity(id: ID!): Identity
+	queryIdentity(filter: IdentityFilter, order: IdentityOrder, first: Int, offset: Int): [Identity]
+	aggregateIdentity(filter: IdentityFilter): IdentityAggregateResult
+	getEntity(id: ID!): Entity
+	queryEntity(filter: EntityFilter, order: EntityOrder, first: Int, offset: Int): [Entity]
+	aggregateEntity(filter: EntityFilter): EntityAggregateResult
+	getUser(id: ID!): User
+	queryUser(filter: UserFilter, order: UserOrder, first: Int, offset: Int): [User]
+	aggregateUser(filter: UserFilter): UserAggregateResult
+	getPuppy(id: ID!): Puppy
+	queryPuppy(filter: PuppyFilter, order: PuppyOrder, first: Int, offset: Int): [Puppy]
+	aggregatePuppy(filter: PuppyFilter): PuppyAggregateResult
+}
+
+#######################
+# Generated Mutations
+#######################
+
+type Mutation {
+	addIdentity(input: [AddIdentityInput!]!): AddIdentityPayload
+	updateIdentity(input: UpdateIdentityInput!): UpdateIdentityPayload
+	deleteIdentity(filter: IdentityFilter!): DeleteIdentityPayload
+	updateEntity(input: UpdateEntityInput!): UpdateEntityPayload
+	deleteEntity(filter: EntityFilter!): DeleteEntityPayload
+	addUser(input: [AddUserInput!]!): AddUserPayload
+	updateUser(input: UpdateUserInput!): UpdateUserPayload
+	deleteUser(filter: UserFilter!): DeleteUserPayload
+	addPuppy(input: [AddPuppyInput!]!): AddPuppyPayload
+	updatePuppy(input: UpdatePuppyInput!): UpdatePuppyPayload
+	deletePuppy(filter: PuppyFilter!): DeletePuppyPayload
+}
+
